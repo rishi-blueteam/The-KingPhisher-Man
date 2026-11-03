@@ -13,6 +13,8 @@ The lab currently supports two primary workflows:
 - **Sample-based analysis:** Select phishing email samples from the Phishing Pot GitHub repository, analyze them, and deliver them to a Gmail inbox for controlled testing.
 - **Live inbox monitoring:** Monitor a controlled Gmail inbox for incoming emails from a designated attacker account, analyze received messages, and handle them according to the analysis verdict.
 
+> **Note:** Updated code with the latest update will be added soon; configurations and last-minute fixes are under review and in progress.
+
 ## Current Workflow
 
 ```
