@@ -1,5 +1,7 @@
 # KingPhisher-Man SOC Lab for Windows
 
+![alt Text](Kingfisher-Man.png)
+
 A Windows-focused phishing detection and email analysis lab that simulates phishing email delivery, performs automated email security analysis, and supports SOC-style investigation and response workflows.
 
 ## Project Overview
