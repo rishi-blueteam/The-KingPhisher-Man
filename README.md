@@ -77,14 +77,12 @@ The controlled attacker workflow currently uses a limited monitoring window to a
 
 ![alt text](./Versions/Gmailbox.png)
 
-## Current Version
+## Version Status
 
-**Version:** 1.1  
-**Status:** Active development
-
-Version 1.1 strengthens the domain analysis component with additional heuristic behavior and correlation rules to improve verdict quality and reduce noisy findings.
-
-The core sample-delivery and email-analysis workflows from Version 1.0 remain part of the project.
+**Previous Version:** 1.0 (Tool Created and Updated)
+**New Version:** 1.1  
+**Status Update:** Critical Bugs fixed.
+- Version 1.1 Header analysis fixed, IP extraction successful, MIME: possible content type for .eml file extraction successful.  
 
 ## Known Limitations and Planned Work
 
