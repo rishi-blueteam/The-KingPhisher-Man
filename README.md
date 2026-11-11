@@ -1,6 +1,6 @@
-# KingPhisher-Man SOC Lab for Windows
-
 ![alt Text](Kingfisher-Man.png)
+
+# KingPhisher-Man SOC Lab for Windows
 
 A Windows-focused phishing detection and email analysis lab that simulates phishing email delivery, performs automated email security analysis, and supports SOC-style investigation and response workflows.
 
@@ -12,8 +12,6 @@ The lab currently supports two primary workflows:
 
 - **Sample-based analysis:** Select phishing email samples from the Phishing Pot GitHub repository, analyze them, and deliver them to a Gmail inbox for controlled testing.
 - **Live inbox monitoring:** Monitor a controlled Gmail inbox for incoming emails from a designated attacker account, analyze received messages, and handle them according to the analysis verdict.
-
-> **Note:** Updated code with the latest update will be added soon; configurations and last-minute fixes are under review and in progress.
 
 ## Current Workflow
 
@@ -75,22 +73,31 @@ When a message is detected:
    - **Clean:** The updated message is returned to the inbox and the original is removed from temporary hold.
    - **Malicious:** The message is quarantined or moved to trash, and an administrative alert is generated.
 
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image.png)
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-1.png)
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-2.png)
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-3.png)
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-4.png)
+![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-5.png)
+
+
 The controlled attacker workflow currently uses a limited monitoring window to avoid indefinite polling.
 
 ![alt text](./Versions/Gmailbox.png)
 
-## Version Status
+## Current Version
 
-**Previous Version:** 1.0 (Tool Created and Updated)
-**New Version:** 1.1  
-**Status Update:** Critical Bugs fixed.
-- Version 1.1 Header analysis fixed, IP extraction successful, MIME: possible content type for .eml file extraction successful.  
+**Version:** 1
+**Phase-Number** 3  
+**Status:** Completed
+
+Version 1, Phase 3 strengthens the domain analysis component with additional heuristic behavior and correlation rules to improve verdict quality and reduce noisy findings.
 
 ## Known Limitations and Planned Work
 
-- Wazuh dashboard integration of the JSON verdict is not yet fully tested.
+- Elastic dashboard integration of the JSON verdict is not yet fully tested. Testing soon to be deployed
 - Attachment analysis currently covers basic analysis; deeper sandbox-based behavioral analysis remains future work.
-- Domain, URL, and IP analysis may be expanded as additional correlation rules and enrichment sources are implemented.
+- URL, and IP analysis may be expanded as additional correlation rules and enrichment sources are implemented.
 - Inbox monitoring and email handling may be further refined as the lab evolves.
 
 ## Repository Structure
