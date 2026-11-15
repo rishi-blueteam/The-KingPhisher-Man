@@ -15,6 +15,9 @@ Free / open-source building blocks
 Speed: all network lookups (DNS, RDAP, TLS) run IN PARALLEL; Tranco is a local DB;
 validated results are cached in logs/validated_domains.log.
 
+
+Add api_keys_osint.env in the same folder with your API keys for optional OSINT enrichment (VirusTotal, AbuseIPDB, URLhaus, etc.).
+
 Usage:
   python domain_risk_analyzer.py example.com                 # JSON on stdout (pipeline mode)
   python domain_risk_analyzer.py example.com --report        # colorful human report
