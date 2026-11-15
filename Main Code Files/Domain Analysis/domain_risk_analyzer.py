@@ -2,8 +2,6 @@
 """
 Domain Risk Analyzer  -  4-tier, 12-indicator phishing-domain scoring engine
 =============================================================================
-Replaces BOTH  Domain_Analyzer.py  and  domain_intel_analyzer.py  (same output keys are kept,
-so email_data_extractor1.py keeps working; see the compatibility wrappers at the bottom).
 
 Free / open-source building blocks
   * Tranco top-1M list (local SQLite)  -> trust rank, TLD reputation, typosquat baseline
@@ -16,8 +14,6 @@ Free / open-source building blocks
 
 Speed: all network lookups (DNS, RDAP, TLS) run IN PARALLEL; Tranco is a local DB;
 validated results are cached in logs/validated_domains.log.
-
-Install:  pip install requests dnspython cryptography tldextract rapidfuzz
 
 Usage:
   python domain_risk_analyzer.py example.com                 # JSON on stdout (pipeline mode)
@@ -53,6 +49,7 @@ from urllib.parse import urlparse
 
 try:
     import requests
+    from dotenv import load_dotenv
     import dns.resolver
     import dns.exception
     import tldextract
@@ -61,13 +58,14 @@ try:
     from cryptography.x509.oid import NameOID
 except ImportError as _e:  # pragma: no cover
     sys.stderr.write(f"[!] Missing dependency: {_e.name}\n"
-                     "    Run: pip install requests dnspython cryptography tldextract rapidfuzz\n")
+                     "    Run: pip install requests python-dotenv dnspython cryptography tldextract rapidfuzz\n")
     sys.exit(2)
 
 # =====================================================================
 #  CONFIGURATION
 # =====================================================================
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / "api_keys.env")
 LOG_DIR = BASE_DIR / "logs"
 CACHE_DIR = BASE_DIR / "cache"
 VALIDATED_LOG = LOG_DIR / "validated_domains.log"       # JSON-lines, one record per analysed domain
@@ -1072,6 +1070,11 @@ class ValidatedCache:
     def put(self, result):
         ra = result["risk_assessment"]
         ttl = TTL_DEGRADED if result["analysis_meta"]["degraded"] else TTL_BY_LEVEL[ra["risk_level"]]
+        mx_status = result.get("threat_intelligence", {}).get("raw_engine_reports", {}).get("mxtoolbox", {}).get("status")
+        if mx_status == "LISTED":
+            ttl = min(ttl, timedelta(hours=6))
+        elif mx_status in ("ERROR", "UNAVAILABLE", "INCONCLUSIVE", "SKIPPED"):
+            ttl = min(ttl, timedelta(hours=1))
         rec = {"domain": result["target_domain"], "registrable": result["registrable_domain"],
                "analyzed_at": now_utc().isoformat(timespec="seconds"),
                "valid_until": (now_utc() + ttl).isoformat(timespec="seconds"),
@@ -1081,6 +1084,182 @@ class ValidatedCache:
             self.records[rec["domain"]] = rec
             with open(self.path, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+# =====================================================================
+#  PASSIVE DOMAIN THREAT INTELLIGENCE (no browsing or URL submission)
+# =====================================================================
+def query_virustotal_domain(host: str) -> dict:
+    key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+    if not key:
+        return {"status": "SKIPPED", "reason": "VIRUSTOTAL_API_KEY not configured"}
+    try:
+        res = requests.get(f"https://www.virustotal.com/api/v3/domains/{host}",
+                           headers={"x-apikey": key, "accept": "application/json"}, timeout=(4, 12))
+        if res.status_code == 404:
+            return {"status": "NOT_FOUND", "reason": "No VirusTotal domain report"}
+        if res.status_code != 200:
+            return {"status": "UNAVAILABLE" if res.status_code in (401, 403, 429) else "ERROR",
+                    "reason": f"HTTP {res.status_code}"}
+        attr = res.json().get("data", {}).get("attributes", {})
+        stats = attr.get("last_analysis_stats") or {}
+        if not stats:
+            return {"status": "INCONCLUSIVE", "reason": "No vendor analysis statistics"}
+        return {"status": "SUCCESS", "malicious": int(stats.get("malicious", 0)),
+                "suspicious": int(stats.get("suspicious", 0)),
+                "harmless": int(stats.get("harmless", 0)),
+                "undetected": int(stats.get("undetected", 0)),
+                "last_analysis_date": attr.get("last_analysis_date"),
+                "reputation": attr.get("reputation")}
+    except (requests.RequestException, ValueError, TypeError) as e:
+        return {"status": "ERROR", "reason": str(e)}
+
+
+def query_mxtoolbox_blacklist(host: str) -> dict:
+    """Official MxToolbox API; blacklist results are reputation evidence, not phishing proof."""
+    key = os.getenv("MXTOOLBOX_API_KEY", "").strip().strip('"').strip("'")
+    if not key:
+        return {"status": "SKIPPED", "reason": "MXTOOLBOX_API_KEY not configured"}
+    try:
+        res = requests.get(
+            "https://api.mxtoolbox.com/api/v1/Lookup/blacklist/",
+            params={"argument": host},
+            headers={"Authorization": key, "Accept": "application/json"},
+            timeout=(4, 12),
+        )
+        if res.status_code in (401, 403):
+            return {"status": "UNAVAILABLE", "reason": f"HTTP {res.status_code}: invalid key or blacklist lookup not permitted by plan"}
+        if res.status_code == 429:
+            return {"status": "UNAVAILABLE", "reason": "HTTP 429: rate limit or NetworkRequests quota exceeded"}
+        if res.status_code != 200:
+            return {"status": "ERROR", "reason": f"MxToolbox HTTP {res.status_code}"}
+        data = res.json()
+        if not isinstance(data, dict):
+            return {"status": "INCONCLUSIVE", "reason": "Unexpected API response type"}
+        if str(data.get("Command", "")).lower() not in ("blacklist", ""):
+            return {"status": "INCONCLUSIVE", "reason": "API did not return a blacklist lookup"}
+        if data.get("CommandArgument") and str(data["CommandArgument"]).lower().rstrip(".") != host.lower().rstrip("."):
+            return {"status": "INCONCLUSIVE", "reason": "API response target differs from requested domain"}
+        keys = ("Failed", "Warnings", "Passed", "Timeouts")
+        if not any(k in data for k in keys):
+            return {"status": "INCONCLUSIVE", "reason": "Blacklist check arrays missing from API response"}
+        if any(not isinstance(data.get(k, []), list) for k in keys):
+            return {"status": "INCONCLUSIVE", "reason": "Malformed blacklist check arrays"}
+        def records(items):
+            return [{"name": str(x.get("Name") or "Unknown list"),
+                     "info": str(x.get("Info") or ""),
+                     "url": str(x.get("Url") or "")}
+                    for x in items if isinstance(x, dict)]
+        listed = records(data.get("Failed", []))
+        warnings = records(data.get("Warnings", []))
+        passed = records(data.get("Passed", []))
+        timeouts = records(data.get("Timeouts", []))
+        # MxToolbox's blacklist 'Failed' rows are listings. A zero-listing result
+        # requires at least one completed check; otherwise the lookup is inconclusive.
+        if listed:
+            status = "LISTED"
+        elif passed and not timeouts and not warnings:
+            status = "NOT_LISTED"
+        else:
+            status = "INCONCLUSIVE"
+        return {"status": status, "listed_count": len(listed),
+                "checked_count": len(listed) + len(passed) + len(warnings) + len(timeouts),
+                "passed_count": len(passed), "warning_count": len(warnings),
+                "timeout_count": len(timeouts), "listings": listed,
+                "warnings": warnings, "timeouts": timeouts,
+                "time_recorded": data.get("TimeRecorded"),
+                "note": "A blacklist listing is not standalone proof of phishing; no listing is not proof of safety"}
+    except (requests.RequestException, ValueError, TypeError) as e:
+        return {"status": "ERROR", "reason": str(e)}
+
+
+def query_domainscan_trust(host: str) -> dict:
+    """Passive DomainScan composite trust check; never equate hygiene with phishing proof."""
+    key = os.getenv("DOMAINSCAN_API_KEY", "").strip().strip('"').strip("'")
+    headers = {"Accept": "application/json", "User-Agent": "KingPhisherMan-DomainRisk/2.0"}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    try:
+        res = requests.get("https://api.domainscan.in/api/v1/domain/trust",
+                           params={"domain": host, "detailed": "false"},
+                           headers=headers, timeout=(4, 18))
+        if res.status_code in (401, 403, 429):
+            return {"status": "UNAVAILABLE", "reason": f"DomainScan HTTP {res.status_code}: authorization, plan or rate limit"}
+        if res.status_code != 200:
+            return {"status": "ERROR", "reason": f"DomainScan HTTP {res.status_code}"}
+        payload = res.json()
+        if not isinstance(payload, dict) or payload.get("success") is not True:
+            return {"status": "INCONCLUSIVE", "reason": "DomainScan did not return success=true"}
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            return {"status": "INCONCLUSIVE", "reason": "Missing structured DomainScan data"}
+        local = data.get("LocalAnalysis") or {}
+        overall = local.get("overall") or {} if isinstance(local, dict) else {}
+        ai = data.get("AiAnalysis") or {}
+        if not isinstance(overall, dict): overall = {}
+        if not isinstance(ai, dict): ai = {}
+        trust = overall.get("healthScore", overall.get("trustScore"))
+        if trust is None: trust = ai.get("overall_health_score", ai.get("trust_score"))
+        try:
+            trust = float(trust) if trust is not None else None
+            if trust is not None and not 0 <= trust <= 100: trust = None
+        except (ValueError, TypeError): trust = None
+        risk = str(ai.get("risk_level") or ai.get("trust_grade") or overall.get("phishingRisk") or "").strip().upper()
+        if "HIGH" in risk: grade = "HIGH"
+        elif "MEDIUM" in risk: grade = "MEDIUM"
+        elif "LOW" in risk: grade = "LOW"
+        else: grade = "UNKNOWN"
+        bl = data.get("blackListData") or {}
+        if not isinstance(bl, dict): bl = {}
+        count = bl.get("blacklistedCount")
+        if count is None and isinstance(bl.get("blacklisted"), list): count = len(bl["blacklisted"])
+        try: count = max(0, int(count)) if count is not None else None
+        except (ValueError, TypeError): count = None
+        names = []
+        for item in (bl.get("blacklisted") or [])[:15] if isinstance(bl.get("blacklisted"), list) else []:
+            names.append(str(item.get("database") or item.get("name") or item.get("rbl") or "Unknown") if isinstance(item, dict) else str(item))
+        if count is not None and count > 0: status = "LISTED"
+        elif trust is not None or grade != "UNKNOWN" or count == 0: status = "SUCCESS"
+        else: status = "INCONCLUSIVE"
+        return {"status": status, "trust_score": trust, "risk_grade": grade,
+                "blacklisted_count": count, "blacklists": names,
+                "phishing_risk": overall.get("phishingRisk"),
+                "reputation_score": overall.get("reputationScore"),
+                "note": "Composite trust includes configuration and overlapping blocklists; not independent proof of phishing"}
+    except (requests.RequestException, ValueError, TypeError) as e:
+        return {"status": "ERROR", "reason": str(e)}
+
+
+def collect_domain_threat_intel(host: str) -> dict:
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        futures = {"virustotal": pool.submit(query_virustotal_domain, host),
+                   "mxtoolbox": pool.submit(query_mxtoolbox_blacklist, host),
+                   "domainscan": pool.submit(query_domainscan_trust, host)}
+        reports = {name: future.result() for name, future in futures.items()}
+    vt, mx, ds = reports["virustotal"], reports["mxtoolbox"], reports["domainscan"]
+    flags = []
+    vt_malicious = vt.get("status") == "SUCCESS" and vt.get("malicious", 0) > 0
+    vt_suspicious = vt.get("status") == "SUCCESS" and vt.get("suspicious", 0) > 0
+    if vt_malicious:
+        flags.append(f"VirusTotal: {vt['malicious']} vendors flagged the domain malicious")
+    if vt_suspicious:
+        flags.append(f"VirusTotal: {vt['suspicious']} vendors flagged the domain suspicious")
+    if mx.get("status") == "LISTED":
+        names = ", ".join(x["name"] for x in mx.get("listings", [])[:5])
+        flags.append(f"MxToolbox: listed on {mx['listed_count']} blacklist(s)" + (f" ({names})" if names else ""))
+    if ds.get("status") == "LISTED":
+        flags.append(f"DomainScan: {ds['blacklisted_count']} blocklist listing(s) (may overlap with MxToolbox)")
+    if ds.get("risk_grade") == "HIGH":
+        flags.append("DomainScan: high composite risk grade (configuration/reputation context)")
+    usable = (vt.get("status") in ("SUCCESS", "NOT_FOUND") or
+              mx.get("status") in ("LISTED", "NOT_LISTED") or
+              ds.get("status") in ("LISTED", "SUCCESS"))
+    verdict = ("MALICIOUS" if vt_malicious else
+               "SUSPICIOUS" if vt_suspicious or mx.get("status") == "LISTED" or
+               ds.get("status") == "LISTED" or ds.get("risk_grade") == "HIGH" else
+               "NO_KNOWN_THREATS" if usable else "INCONCLUSIVE")
+    return {"verdict": verdict, "triggered_flags": flags, "raw_engine_reports": reports,
+            "note": "VirusTotal detection, MxToolbox blacklist, and DomainScan composite trust are correlated; blacklist overlap is not double-counted. A clean lookup is not proof of safety."}
 
 
 # =====================================================================
@@ -1095,7 +1274,7 @@ def analyze_full(target: str, use_cache=True, refresh=False, geo=True) -> dict:
     cache = ValidatedCache(VALIDATED_LOG) if use_cache else None
     if cache and not refresh:
         rec = cache.get(host)
-        if rec:
+        if (rec and "domainscan" in rec.get("result", {}).get("threat_intelligence", {}).get("raw_engine_reports", {})):
             res = json.loads(json.dumps(rec["result"]))
             res["analysis_meta"].update(cache={"hit": True, "analyzed_at": rec["analyzed_at"], "valid_until": rec["valid_until"]},
                                         elapsed_ms=int((time.perf_counter() - t0) * 1000))
@@ -1219,6 +1398,26 @@ def finish(ctx, store, rank, indicators, score, dns_res, rd, tls, ns, t0, cache,
         "analysis_meta": {"elapsed_ms": int((time.perf_counter() - t0) * 1000), "fast_path": fast, "degraded": degraded,
                           "cache": {"hit": False}, "engine": "domain_risk_analyzer/2.0"},
     }
+    if ctx["is_ip"]:
+        ti = {"verdict": "NOT_APPLICABLE", "triggered_flags": [], "raw_engine_reports": {},
+              "note": "Domain reputation checks do not apply to IP literals; use IP analyzer"}
+    else:
+        ti = collect_domain_threat_intel(ctx["host"])
+    result["threat_intelligence"] = ti
+    # Preserve the original heuristic risk score and expose a separate combined SOC verdict.
+    heuristic_level = result["risk_assessment"]["risk_level"]
+    if ti["verdict"] == "MALICIOUS":
+        combined = "MALICIOUS"
+    elif heuristic_level in ("CRITICAL", "HIGH") or ti["verdict"] == "SUSPICIOUS":
+        combined = "SUSPICIOUS"
+    elif heuristic_level == "MEDIUM":
+        combined = "SUSPICIOUS"
+    elif ti["verdict"] == "INCONCLUSIVE":
+        combined = "INCONCLUSIVE"
+    else:
+        combined = "NO_KNOWN_THREATS"
+    result["risk_assessment"]["soc_verdict"] = combined
+    result["risk_assessment"]["verdict_basis"] = "CTI match and/or heuristic indicators; heuristic score is unchanged"
     if cache:
         cache.put(result)
     return result
@@ -1303,6 +1502,22 @@ def render_report(r: dict, out=sys.stdout):
     P(f"  {W}Tranco trust adjustment: {ra['tranco_adjustment']:+d}  ({ra['tranco_adjustment_note']}){X}")
 
     inf, lc, tls = r["infrastructure_and_hosting"], r["lifecycle_and_attribution"], r["cryptographic_tokens"]
+    ti = r.get("threat_intelligence", {})
+    P(f"\n{C}{BOLD}  ━━ THREAT INTELLIGENCE{X}")
+    P(f"  SOC verdict: {ra.get('soc_verdict', 'n/a')} · CTI verdict: {ti.get('verdict', 'n/a')}")
+    for provider, report in ti.get("raw_engine_reports", {}).items():
+        detail = ""
+        if provider == "domainscan":
+            detail = f" · trust {report.get('trust_score')} /100 · risk {report.get('risk_grade')} · blocklists {report.get('blacklisted_count')}"
+        if provider == "mxtoolbox":
+            detail = f" · {report.get('listed_count', 0)} listed / {report.get('checked_count', 0)} checks" if "listed_count" in report else ""
+        P(f"  {provider}: {report.get('status')}{detail}" +
+          (f" · {report.get('reason')}" if report.get('reason') else ""))
+        if provider == "mxtoolbox":
+            for item in report.get("listings", [])[:10]:
+                P(f"    LISTED: {item['name']}" + (f" · {item['info']}" if item.get('info') else ""))
+    for flag in ti.get("triggered_flags", []):
+        P(f"  ! {flag}")
     P(f"\n{B}{BOLD}  ━━ EVIDENCE COLLECTED{X}")
     ht = inf.get("hosting_telemetry") or {}
     P(f"{W}  DNS      : {', '.join(inf.get('resolved_ips') or []) or inf.get('dns_status', 'n/a')}   TTL {inf.get('ttl_seconds')}")
