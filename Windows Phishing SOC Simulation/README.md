@@ -217,6 +217,8 @@ Python local server (kingphisher_ui_2.py)
 | COOLDOWN_SECONDS | 4 seconds     | Minimum delay between analysis starts |
 
 
+## Troubleshooting
+
 |                       Problem                       |                                                            What to check                                                            |
 |:---------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
 | Browser opens but interface is outdated             | Ensure ui/index.html and ui/app.js contain your latest code; restart the server and hard-refresh the browser                        |
