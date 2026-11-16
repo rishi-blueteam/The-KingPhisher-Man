@@ -1,0 +1,31 @@
+Python File for Loggin
+
+import json
+from imapclient import IMAPClient
+import pyzmail
+
+GMAIL_USER = "yourguyatwork@gmail.com"
+APP_PASSWORD = "binr kjpx sape uybn"
+
+try:
+    with IMAPClient('imap.gmail.com', ssl=True) as server:
+        server.login(GMAIL_USER, APP_PASSWORD)
+        server.select_folder('INBOX')
+        
+        # Search for unread emails
+        messages = server.search(['UNSEEN'])
+        
+        for msg_id, data in server.fetch(messages, ['BODY[]']).items():
+            message = pyzmail.PyzMessage.factory(data[b'BODY[]'])
+            
+            log_entry = {
+                "email_source": "Gmail-Lab",
+                "from": message.get_address('from')[1],
+                "subject": message.get_subject(),
+                "body": message.text_part.get_payload().decode('utf-8') if message.text_part else ""
+            }
+            
+            with open("/var/log/phishing_detector.log", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+except Exception as e:
+    print(f"Error fetching mail: {e}")

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime-generated data
+**/cache/
+**/logs/
+**/ui_data/
+**/eml_held/
+
+# Local test artifacts
+*.log

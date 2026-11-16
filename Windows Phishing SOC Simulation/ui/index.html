@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="__CSRF__">
+<title>The Kingphisher-Man · Phishing SOC</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+
+<!-- ============ INTRO ============ -->
+<section id="view-intro" class="view active">
+  <canvas id="introCanvas" width="320" height="180"></canvas>
+  <img id="introLogo" src="/assets/Kingfisher-Man.png" alt="The Kingphisher-Man">
+  <div id="introCaption" class="px"></div>
+  <button id="skipIntro" class="btn ghost px">SKIP ▸</button>
+</section>
+
+<!-- ============ MENU ============ -->
+<section id="view-menu" class="view">
+  <header class="menu-logo">
+    <div class="logo-crop"><img src="/assets/Kingfisher-Man.png" alt="The Kingphisher-Man"></div>
+  </header>
+  <h2 class="menu-title px">SELECT YOUR WATERS</h2>
+  <div id="cards" class="cards" role="listbox" aria-label="Choose a mode"></div>
+  <p class="menu-hint px">PRESS <b>A</b> · <b>B</b> · <b>C</b> &nbsp;|&nbsp; ← → TO MOVE &nbsp;|&nbsp; ENTER TO GRAB DESTINY &nbsp;|&nbsp; OR CLICK</p>
+  <p id="menuWarn" class="menu-warn"></p>
+</section>
+
+<!-- ============ A: ROOKIE ============ -->
+<section id="view-demo" class="view screen">
+  <div class="topbar">
+    <button class="btn ghost px" data-goto="menu">◂ MENU</button>
+    <h2 class="px">A · ROOKIE · THE SHALLOWS</h2>
+  </div>
+  <div class="panel narrow">
+    <p class="lead">Watch the pipeline work on a <b>real phishing sample</b>.</p>
+    <ol class="how">
+      <li>The Kingphisher-Man casts a line into the <b>phishing_pot</b> pond on GitHub.</li>
+      <li>One random sample that was never caught before is hooked and downloaded.</li>
+      <li>The sample is logged to prevent duplicate downloads. You can run another analysis whenever you like.</li>
+      <li>The analysis tool inspects <b>H</b>eaders, <b>D</b>omains, <b>I</b>Ps and <b>F</b>iles.</li>
+      <li>You get one combined verdict.</li>
+    </ol>
+    <p class="note">
+      ℹ Rookie mode fetches phishing samples from the phishing_pot
+      repository and analyses them using the H·D·I·F framework.
+      <b>Unlimited runs are available.</b>
+    </p>
+    <div class="row">
+      <button id="btnDemoStart" class="btn primary px">CAST THE LINE ▸</button>
+      <button id="btnDemoLast" class="btn px hidden">VIEW LAST DEMO RESULT</button>
+    </div>
+    <p id="demoMsg" class="msg"></p>
+  </div>
+</section>
+
+<!-- ============ B: AMATEUR ============ -->
+<section id="view-upload" class="view screen">
+  <div class="topbar">
+    <button class="btn ghost px" data-goto="menu">◂ MENU</button>
+    <h2 class="px">B · AMATEUR · OPEN WATER</h2>
+  </div>
+  <div class="panel narrow">
+    <p class="lead">Drop an <b>.eml</b> file and let the net do the work.</p>
+    <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choose or drop an .eml file">
+      <div class="px dz-title">DROP .EML HERE</div>
+      <div class="dz-sub">or click to browse · max 10 MB</div>
+      <div id="dzFile" class="dz-file"></div>
+    </div>
+    <input id="fileInput" type="file" accept=".eml,message/rfc822" class="hidden">
+    <div class="row">
+      <button id="btnUpload" class="btn primary px" disabled>ANALYSE ▸</button>
+      <span id="uploadQuota" class="chip"></span>
+    </div>
+    <p id="uploadMsg" class="msg"></p>
+  </div>
+</section>
+
+<!-- ============ C: PRO ============ -->
+<section id="view-pro" class="view screen">
+  <div class="topbar">
+    <button class="btn ghost px" data-goto="menu">◂ MENU</button>
+    <h2 class="px">C · PRO · THE DEEP SEA</h2>
+  </div>
+  <div class="panel narrow">
+    <p class="lead">Guard a Gmail inbox. Mail from your <b>test sender</b> is hidden the moment it lands, analysed, then released.</p>
+    <label class="field"><span>Inbox to guard (Gmail address)</span>
+      <input id="proTarget" type="email" autocomplete="off" spellcheck="false" placeholder="you@gmail.com"></label>
+    <label class="field"><span>Gmail App Password (16 characters)</span>
+      <input id="proPass" type="password" autocomplete="new-password" spellcheck="false" placeholder="abcd efgh ijkl mnop"></label>
+    <label class="field"><span>Allowed sender (your attacker test address)</span>
+      <input id="proSender" type="email" autocomplete="off" spellcheck="false" placeholder="attacker.test@gmail.com"></label>
+    <p class="note">ℹ This build guards <b>one inbox</b> and analyses mail from <b>one sender</b> only. Change the sender to test with your own attacker address. Any other sender is ignored.<br>
+      🔒 Your App Password goes only to this local program, lives in memory, and is never saved or logged. IMAP must be enabled in Gmail.</p>
+    <div class="row">
+      <button id="btnProStart" class="btn primary px">START GUARD ▸</button>
+      <span id="proQuota" class="chip"></span>
+    </div>
+    <p id="proMsg" class="msg"></p>
+  </div>
+</section>
+
+<!-- ============ RUN (shared) ============ -->
+<section id="view-run" class="view screen">
+  <div class="topbar">
+    <button id="btnRunMenu" class="btn ghost px">◂ MENU</button>
+    <h2 id="runTitle" class="px">WORKING ...</h2>
+    <span class="spacer"></span>
+    <button id="btnClosePreview" class="btn ghost px hidden">✕ CLOSE PREVIEW</button>
+    <button id="btnStop" class="btn danger px hidden">■ STOP</button>
+  </div>
+  <div id="runBody" class="run-body">
+    <ol id="stepper" class="stepper"></ol>
+    <div class="run-right">
+      <div id="countdown" class="countdown px hidden"></div>
+      <div id="runLog" class="console" aria-live="polite"></div>
+      <div id="runResult" class="run-result hidden"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section id="view-results" class="view">
+  <div class="topbar results-top">
+    <button class="btn ghost px" data-goto="menu">◂ MENU</button>
+    <div class="brandline"><span class="px gold">H·D·I·F</span><span class="sub">Heuristic Defense &amp; Inspection Framework</span></div>
+    <span class="spacer"></span>
+    <span id="resFile" class="chip"></span>
+    <a id="btnDlHtml" class="btn px" href="#">⭳ REPORT</a>
+    <a id="btnDlJson" class="btn ghost px" href="#">JSON</a>
+    <button id="btnRerun" class="btn primary px">↻ RE-RUN</button>
+  </div>
+  <nav id="sidebar" class="sidebar" aria-label="Analysis layers"></nav>
+  <main id="resMain" class="res-main"></main>
+</section>
+
+<script src="/ui/intro.js"></script>
+<script src="/ui/app.js"></script>
+</body>
+</html>

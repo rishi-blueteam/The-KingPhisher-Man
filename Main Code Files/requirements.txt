@@ -1,0 +1,12 @@
+# The KingPhisher-Man — terminal-based email analysis pipeline
+# Dependencies identified from the five supplied Python analysis scripts.
+beautifulsoup4
+requests
+python-dotenv
+dnspython
+tldextract
+rapidfuzz
+cryptography
+Pillow
+pytesseract
+pypdf

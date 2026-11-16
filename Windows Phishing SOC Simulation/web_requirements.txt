@@ -1,0 +1,16 @@
+# KingPhisher-Man Web UI + shared phishing analysis pipeline
+# The UI server uses Python's standard library.
+# Packages below support its underlying analysis modules.
+beautifulsoup4
+requests
+python-dotenv
+dnspython
+tldextract
+rapidfuzz
+cryptography
+Pillow
+pytesseract
+pypdf
+
+# Optional YAML fallback used by the UI and Gmail workflow scripts
+PyYAML

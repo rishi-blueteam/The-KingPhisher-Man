@@ -2,113 +2,114 @@
 
 # KingPhisher-Man SOC Lab for Windows
 
-A Windows-focused phishing detection and email analysis lab that simulates phishing email delivery, performs automated email security analysis, and supports SOC-style investigation and response workflows.
+Phishing Email Investigation | Threat Intelligence Correlation | SOC Simulation 
+
+A Windows-focused, Python-based phishing analysis project with terminal and locally hosted web interfaces.
+
+
 
 ## Project Overview
 
-KingPhisher-Man combines `.eml` collection, email analysis, inbox monitoring, and verdict-based email handling into a practical phishing analysis workflow. The project aims to demonstrate how suspicious emails can be analyzed, classified, and handled before they become a user-facing threat.
+The KingPhisher-Man is a hands-on phishing investigation and SOC simulation project built around the analysis of .eml email files. It extracts and examines email headers, domains, URLs, IP addresses, and attachments; enriches available indicators with threat intelligence; and produces correlated findings to support an analyst's investigation.
 
-The lab currently supports two primary workflows:
+The project also includes controlled phishing-sample collection and Gmail monitoring workflows to explore how suspicious messages can be investigated and handled in a test environment.
 
-- **Sample-based analysis:** Select phishing email samples from the Phishing Pot GitHub repository, analyze them, and deliver them to a Gmail inbox for controlled testing.
-- **Live inbox monitoring:** Monitor a controlled Gmail inbox for incoming emails from a designated attacker account, analyze received messages, and handle them according to the analysis verdict.
+The repository offers two interfaces that use the underlying Python analysis pipeline. The documentation for each is maintained separately so this page can serve as a quick project introduction.
 
-## Current Workflow
+
+## Watch the Web Interface in Action
+
+![alt text](./Windows%20Phishing%20SOC%20Simulation/media/1.gif)
+![alt text](./Windows%20Phishing%20SOC%20Simulation/media/2.gif)
+![alt text](./Windows%20Phishing%20SOC%20Simulation/media/3.gif)
+![alt text](./Windows%20Phishing%20SOC%20Simulation/media/4.gif)
+![alt text](./Windows%20Phishing%20SOC%20Simulation/media/5.gif)
+
+Demo: the locally hosted web interface, from selecting an investigation mode to reviewing the analysis results. The GIF illustrates the interface; the application itself runs locally on the user's machine.
+
+## Choose Your Interface
+
+
+1. Web-Based Implementation
+Use the locally hosted browser interface to investigate emails through three interactive modes:
+
+|   Mode  |     Name     |                                              Purpose                                             |
+|:-------:|:------------:|:------------------------------------------------------------------------------------------------:|
+| Rookie  | The Shallows | Fetch and analyze a phishing email sample from the configured sample repository.                 |
+| Amateur | Open Water   | Upload and analyze your own .eml file (up to 10 MB).                                             |
+| Pro     | The Deep Sea | Monitor a controlled Gmail inbox for a designated test sender and investigate matching messages. |
+
+
+The UI organizes results into H·D·I·F — Header, Domain, IP, and File analysis, alongside a combined risk assessment and report views. The current configuration imposes a unlimited number of runs per mode; operational cooldowns and external service limits still apply.
+
+[Read the Web-Based README](./Windows%20Phishing%20SOC%20Simulation/README.md) - interface walkthrough, installation, three modes, Gmail configuration, and operational limitations.
+
+
+2. Terminal-Based Implementation
+
+Run the Python analysis scripts from a terminal to inspect .eml messages and explore the individual analysis components. The terminal implementation also includes scripts for sample collection, controlled email delivery, and Gmail monitoring.
+
+What you can explore:
+- Email header and authentication information
+- Domain, URL, and IP indicator analysis
+- Attachment inspection and hash-based reputation lookups
+- Correlated results and structured investigation output
+- Controlled sample-delivery and mailbox-handling workflows
+
+
+### Analysis at a Glance
+
+| Investigation area |                                                                     Focus                                                                    |   |
+|:------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------:|:-:|
+| Email headers      | Sender and reply information, routing headers, SPF/DKIM/DMARC evidence, and originating IP indicators                                        |   |
+| Domains            | Domain structure, registration and DNS context, certificate details, and heuristic risk indicators                                           |   |
+| URLs               | Passive reputation checks through configured threat intelligence sources; no direct browsing of submitted URLs by the URL analyzer           |   |
+| IP addresses       | Registration/ASN context, reverse DNS, reputation, and supporting infrastructure indicators                                                  |   |
+| Attachments        | File hashes, reputation lookups, PDF content inspection, and optional image OCR                                                              |   |
+| Correlation        | Combines available findings into an investigation-oriented assessment; missing or unavailable intelligence is not treated as proof of safety |   |
+
+
+## Quick Start
+
+Prerequisites: Python 3, Git (or a downloaded repository ZIP), an internet connection for online lookups, and your own credentials for API-based services you enable. Image OCR also requires the separately installed Tesseract executable.
 
 ```
-[ Incoming Personalized Email / .eml Injection ] ➔ ➔ ➔ [ Enters @gmail.com Inbox ]
-                                                   │
-                                                   ▼ (Triggered Instantly)
-                                         [ GMAIL API EVENT LISTENER ]
-                                                   │
- ┌─────────────────────────────────────────────────┴─────────────────────────────────────────────────┐
- ▼ (Step 1: Immediate Quarantine Simulation)                                                          ▼ (Step 2: Analysis)
-[ Remove 'INBOX' Label ] ➔ [ Apply 'TEMPORARY_HOLD' Label ]                                   [ Download Message Data as .eml String ]
-              │
-                                                                                                     ▼
-                                                                                              [ RUN CODE ANALYSIS CHAIN ]
-                                                                                                     │
- ┌───────────────────────────────────────────────────────────────────────────────────────────────────┴──────────────────────────────────┐
- ▼ IF VERDICT = CLEAN (Step 3A)                                                                                                         ▼ IF VERDICT = MALICIOUS (Step 3B)
-1. Inject HTML Verdict Banner to Email Body String.                                                                                    1. Apply 'QUARANTINE' / Trash Label.
-2. Send updated email copy back to Inbox via SMTP/API.                                                                                 2. Permanently delete/archive the original message.
-3. Trash/Delete the original un-analyzed email from 'TEMPORARY_HOLD'.                                                                   3. Alert admin/console of blocked thread.
+git clone https://github.com/rishi-blueteam/The-KingPhisher-Man.git
+cd The-KingPhisher-Man
+python -m pip install -r requirements.txt
+
+```
+
+**Launch the Web Interface**
+
+```
+cd "Windows Phishing SOC Simulation"
+python kingphisher_ui_2.py --check
+python kingphisher_ui_2.py
 ```
 
 
-### 1. Email Sample Collection and Delivery
+The local server normally starts at http://127.0.0.1:8765/ and may select another port if needed. Press Ctrl+C to stop it.
 
-- Selects five random `.eml` samples from the configured GitHub phishing sample source.
-- Sends the selected messages to the configured Gmail inbox.
-- Preserves the original email content and metadata while adding the configured recipient to BCC for controlled delivery.
+Terminal Analysis
 
-### 2. Automated Email Analysis
-
-The email analyzer extracts and evaluates relevant email indicators, including:
-
-- **Header analysis:** Sender, recipient, Reply-To, subject, delivery details, attachments, authentication results, and originating IP information.
-- **Domain analysis:** Evaluates domains using configured tools and heuristic rules.
-- **URL analysis:** Supports investigation of suspicious links and associated indicators.
-- **Attachment analysis:** Performs basic file analysis, including hash collection and reputation checks where configured.
-- **IP analysis:** Extracts and examines relevant IP address indicators.
-
-The analysis chain produces a JSON verdict containing correlated findings and scoring information. The output is intended to support downstream alerting and investigation.
-
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-4.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-5.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-6.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-7.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-8.png)
-
-### 3. Controlled Inbox Monitoring and Email Handling
-
-The lab monitors a controlled Gmail inbox for new messages from a designated attacker account.
-
-When a message is detected:
-
-1. The message is temporarily removed from the inbox view and placed under a temporary hold label.
-2. The message is downloaded and passed through the email analysis chain.
-3. A verdict banner is added to the email copy.
-4. The message is handled according to the verdict:
-   - **Clean:** The updated message is returned to the inbox and the original is removed from temporary hold.
-   - **Malicious:** The message is quarantined or moved to trash, and an administrative alert is generated.
-
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image.png)
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-1.png)
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-2.png)
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-3.png)
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-4.png)
-![alt text](./Versions/Version-1/Phase-3-Version-1.2/image-5.png)
+```
+python email_data_extractor1.1_Tool_Github.py "path/to/sample.eml"
+```
 
 
-The controlled attacker workflow currently uses a limited monitoring window to avoid indefinite polling.
+For full setup—including each analyzer's api_keys.env configuration and the Gmail test-account requirements—follow the implementation READMEs linked above.
 
-![alt text](./Versions/Gmailbox.png)
+|                                Document                               |                                   Contents                                  |   |
+|:---------------------------------------------------------------------:|:---------------------------------------------------------------------------:|:-:|
+| [Terminal-Based README](./Main%20Code%20Files/README.md)              | Python analysis workflow, CLI usage, component details, and configuration   |   |
+| [Web-Based README](./Windows%20Phishing%20SOC%20Simulation/README.md) | UI walkthrough, Rookie/Amateur/Pro modes, installation, and local operation |   |
+| [Python requirements](./requirements.txt)                             | Shared analysis-pipeline dependencies                                       |   |
+|                                                                       |                                       
 
-## Current Version
 
-**Version:** 1
-**Phase-Number** 3  
-**Status:** Completed
+### Scope and Safety
 
-Version 1, Phase 3 strengthens the domain analysis component with additional heuristic behavior and correlation rules to improve verdict quality and reduce noisy findings.
+This project is intended for cybersecurity learning, controlled testing, and SOC investigation practice. Use email samples and accounts you own or are authorized to investigate. The web interface binds to localhost rather than providing a public hosted service. Some external intelligence services require personal API credentials and enforce independent quotas.
 
-## Known Limitations and Planned Work
-
-- Elastic dashboard integration of the JSON verdict is not yet fully tested. Testing soon to be deployed
-- Attachment analysis currently covers basic analysis; deeper sandbox-based behavioral analysis remains future work.
-- URL, and IP analysis may be expanded as additional correlation rules and enrichment sources are implemented.
-- Inbox monitoring and email handling may be further refined as the lab evolves.
-
-## Repository Structure
-
-The project contains separate components for:
-
-- `.eml` sample collection and delivery
-- Email header and indicator extraction
-- Domain, URL, attachment, and IP analysis
-- Controlled inbox monitoring and verdict-based handling
-- Supporting documentation and analysis sub-tools
-
-Refer to the relevant component directories for implementation details and configuration instructions.
-
+A correlated verdict is an aid to investigation, not a guarantee that a message is safe or malicious. Gmail workflows can move or replace messages; use a dedicated test mailbox and review the detailed documentation before enabling monitoring.
