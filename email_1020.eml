@@ -1,0 +1,121 @@
+Received: from DB9PR04MB8124.eurprd04.prod.outlook.com (::1) by
+ DB8PR04MB7341.eurprd04.prod.outlook.com with HTTPS; Thu, 23 Jul 2026
+ 11:48:25 +0000
+Received: from AS8PR07CA0031.eurprd07.prod.outlook.com (2603:10a6:20b:120::18)
+ by DB9PR04MB8124.eurprd04.prod.outlook.com (2603:10a6:10:2d1::19) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9102.21; Thu, 23 Jul
+ 2026 11:48:24 +0000
+Received: from AM7EUR06FT014.eop-eur06.prod.protection.outlook.com
+ (2603:10a6:20b:120:cafe::71) by AS8PR07CA0031.outlook.office365.com
+ (2603:10a6:20b:120::18) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9102.21 via Frontend
+ Transport; Thu, 23 Jul 2026 11:48:23 +0000
+Authentication-Results: spf=pass (sender IP is 98.177.68.12)
+ smtp.mailfrom=citiprepaid-salarysea-at.tk; dkim=none (message not signed);
+ dmarc=pass action=none header.from=citiprepaid-salarysea-at.tk;
+ compauth=pass reason=100
+Received-SPF: Pass (protection.outlook.com:
+ domain of citiprepaid-salarysea-at.tk designates 98.177.68.12
+ as permitted sender) receiver=protection.outlook.com;
+ client-ip=98.177.68.12; helo=mail.citiprepaid-salarysea-at.tk; pr=C
+Received: from mail.citiprepaid-salarysea-at.tk (98.177.68.12) by
+ AM7EUR06FT014.mail.protection.outlook.com (10.152.18.64) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.9102.21 via Frontend Transport; Thu, 23 Jul 2026 11:48:22 +0000
+From: Rajiv Mehra, CEO <rajiv.mehra@citiprepaid-salarysea-at.tk>
+To: Priya Sharma <priya.sharma@northstar-industries.example>
+Reply-To: Rajiv Mehra <rajiv.mehra@citiprepaid-salarysea-at.tk>
+Date: Thu, 23 Jul 2026 11:48:18 +0000
+Subject: Confidential: Urgent payment approval required
+Message-ID: <20260723114818.84291@citiprepaid-salarysea-at.tk>
+Return-Path: <rajiv.mehra@citiprepaid-salarysea-at.tk>
+X-Originating-IP: [98.177.68.12]
+X-Mailer: WebMail 4.2
+X-IncomingHeaderCount: 13
+X-MS-Exchange-Organization-Network-Message-Id:
+ 971e542b-90c8-4fd1-b9fe-08ddc93f2953
+X-MS-Exchange-Organization-MessageDirectionality: Incoming
+X-MS-PublicTrafficType: Email
+X-MS-Exchange-Organization-AuthSource:
+ AM7EUR06FT014.eop-eur06.prod.protection.outlook.com
+X-MS-Exchange-Organization-AuthAs: Anonymous
+X-MS-Office365-Filtering-Correlation-Id:
+ 971e542b-90c8-4fd1-b9fe-08ddc93f2953
+X-MS-Exchange-EOPDirect: true
+X-Sender-IP: 98.177.68.12
+X-SID-PRA: RAJIV.MEHRA@CITIPREPAID-SALARYSEA-AT.TK
+X-SID-Result: PASS
+X-MS-Exchange-Organization-PCL: 6
+X-MS-Exchange-Organization-SCL: 9
+X-Microsoft-Antispam: BCL:0;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 23 Jul 2026 11:48:22.7814
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id:
+ 971e542b-90c8-4fd1-b9fe-08ddc93f2953
+X-MS-Exchange-CrossTenant-AuthSource:
+ AM7EUR06FT014.eop-eur06.prod.protection.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB9PR04MB8124
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:03.2140000
+X-Microsoft-Antispam-Mailbox-Delivery:
+ dest:J;OFR:SpamFilterAuthJ;RF:JunkEmail;
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6849211323813637284=="
+
+--===============6849211323813637284==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Priya,
+
+I am in a confidential meeting with the acquisition team and cannot take calls.
+
+Please arrange an urgent wire transfer of INR 18,75,000 to the new consulting
+partner today. The transaction must be completed before 4:00 PM to avoid
+delaying the agreement.
+
+Review the payment instructions here:
+
+http://adventure-nicaragua.net/index.php?option=com_mailto&tmpl=component&link=aHR0cDovL2FkdmVudHVyZ.
+
+Do not discuss this request with anyone until the acquisition is announced.
+Reply to this email after the transfer has been submitted.
+
+Regards,
+Rajiv Mehra
+Chief Executive Officer
+Northstar Holdings
+Sent from my mobile
+
+--===============6849211323813637284==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+<html>
+  <body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222">
+    <p>Priya,</p>
+    <p>I am in a <strong>confidential meeting</strong> with the acquisition team and cannot take calls.</p>
+    <p>Please arrange an <strong>urgent wire transfer of INR 18,75,000</strong> to the new consulting
+       partner today. The transaction must be completed <strong>before 4:00 PM</strong> to avoid
+       delaying the agreement.</p>
+    <p>Review the payment instructions here:</p>
+    <p>
+      <a href="http://adventure-nicaragua.net/index.php?option=com_mailto&amp;tmpl=component&amp;link=aHR0cDovL2FkdmVudHVyZ.">
+        Review Payment Instructions
+      </a>
+    </p>
+    <p><strong>Do not discuss this request with anyone</strong> until the acquisition is announced.
+       Reply to this email after the transfer has been submitted.</p>
+    <p>Regards,<br>
+       Rajiv Mehra<br>
+       Chief Executive Officer<br>
+       Northstar Holdings<br>
+       <em>Sent from my mobile</em>
+    </p>
+  </body>
+</html>
+
+--===============6849211323813637284==--
