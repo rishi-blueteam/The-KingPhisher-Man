@@ -108,11 +108,12 @@ The email analyzer extracts and evaluates relevant email indicators, including:
 
 The analysis chain produces a JSON verdict containing correlated findings and scoring information. The output is intended to support downstream alerting and investigation.
 
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-4.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-5.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-6.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-7.png)
-![alt text](./Versions/Version-1/Phase-2-Version-1/image-8.png)
+![alt text](.././Versions/Version-1/Phase-2-Version-1/image-4.png)
+![alt text](.././Versions/Version-1/Phase-2-Version-1/image-5.png)
+![alt text](.././Versions/Version-1/Phase-2-Version-1/image-6.png)
+![alt text](.././Versions/Version-1/Phase-2-Version-1/image-7.png)
+![alt text](.././Versions/Version-1/Phase-2-Version-1/image-8.png)
+
 
 ### 3. Controlled Inbox Monitoring and Email Handling
 
