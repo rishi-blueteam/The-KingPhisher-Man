@@ -1,6 +1,6 @@
-![alt Text](Kingfisher-Man.png)
+# The KingPhisher-Man SOC Analysis
 
-# KingPhisher-Man SOC Lab for Windows
+![alt Text](Kingfisher-Man.png)
 
 Phishing Email Investigation | Threat Intelligence Correlation | SOC Simulation 
 
@@ -91,7 +91,7 @@ python kingphisher_ui_2.py
 
 The local server normally starts at http://127.0.0.1:8765/ and may select another port if needed. Press Ctrl+C to stop it.
 
-Terminal Analysis
+**Terminal Analysis**
 
 ```
 python email_data_extractor1.1_Tool_Github.py "path/to/sample.eml"
